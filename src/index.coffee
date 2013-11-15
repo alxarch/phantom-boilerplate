@@ -33,23 +33,24 @@ makePage = (page) ->
 		task = pendingTasks[id]
 		if task
 			clearTimeout pendingTasks[id].timeout
-			# cp.kill() for cp in task.children
+			# Do our best to kill any spawned tasks
+			cp.kill() for cp in task.children
 			delete pendingTasks[id]
 
 	queueTask = (method, args) ->
 		# children = []
 		def = Q.defer()
-		###
-		# In order to handle subprocesses spawned by handlers, pass them this shortcut
-		def.spawn = ->
-			cp = spawn arguments...
-			children.push cp
-			cp
-		###
+		
+		# In order to handle be able to abort without leaving ghost subprocesses
+		# pass this helper to handlers
+		cp = spawn arguments...
+		children.push cp
+		cp
+	
 
 		id = pendingTasks.length
 		pendingTasks.push
-			# children: children
+			children: children
 			timeout: setTimeout (-> method.apply def, args), 0
 
 		task = def.promise
@@ -70,7 +71,12 @@ makePage = (page) ->
 			# 'core' events
 			when 'exit'then phantom.exit()
 			when 'close' then page.close()
+			# Aborts a requested task.
 			when 'abort' then clearTask args[0]
+			when 'output' then console.log.apply null, args
+			when 'resize' then page.viewportSize =
+				width: parseInt args[0], 10
+				height: parseInt args[1], 10
 			else
 				throw new Error "Invalid event name: #{name}." unless events[name] or EVENTS[name]
 				
