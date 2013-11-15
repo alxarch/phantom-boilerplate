@@ -17,7 +17,9 @@ module.exports = (page) ->
 				else
 					def.resolve()
 
-				def.promise
+				p = def.promise
+				p.abort = -> send('abort', id)
+				p
 
 
 			@phantom =
