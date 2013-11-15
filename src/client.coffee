@@ -58,13 +58,3 @@ module.exports = (page) ->
 
 				output: (data) ->
 					send 'output', data
-
-				append: (path, data) ->
-					send 'append', data
-				read: (path, data) ->
-					send 'read', data
-				write: (path, data) ->
-					send 'write', data
-
-				task: (name, options) ->
-					send 'task', name, options
